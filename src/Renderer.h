@@ -1,6 +1,13 @@
-#pragma once
-#include<GLEW/glew.h>
-#include<GLFW/glfw3.h>
-#include<string>
-#include<fstream>
-#include<sstream>
+#ifndef RENDERER_CLASS_H
+#define RENDERER_CLASS_H
+
+#include"VertexArray.h"
+#include"IndexBuffer.h"
+
+class Renderer
+{
+public:
+	void Draw(VertexArray& vao,IndexBuffer& ibo);
+};
+
+#endif // !RENDERER_CLASS_H

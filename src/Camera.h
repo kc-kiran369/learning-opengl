@@ -1,7 +1,8 @@
 #ifndef CAMERA_CLASS_H
 #define CAMERA_CLASS_H
 
-#include"Renderer.h"
+#include"GLEW/glew.h"
+#include"GLFW/glfw3.h"
 #include<glm/glm.hpp>
 #include<glm/gtc/matrix_transform.hpp>
 #include<glm/gtc/type_ptr.hpp>
@@ -16,6 +17,8 @@ public:
 	glm::vec3 Orientation = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
 
+	bool firstClick = true;
+	
 	int width, height;
 
 	float speed = 0.1f;

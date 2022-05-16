@@ -1,5 +1,8 @@
-#include"Renderer.h"
+#ifndef VERTEX_ARRAY_CLASS_H
+#define VERTEX_ARRAY_CLASS_H
+
 #include"VertexBuffer.h"
+#include"GLEW/glew.h"
 
 class VertexArray
 {
@@ -8,9 +11,10 @@ private:
 public:
 	VertexArray();
 
-	void LinkVBO(VertexBuffer& vbo, unsigned int vertexSize, unsigned int layout, float stride, void* pointer);
+	void LinkAttrib(VertexBuffer& vbo, unsigned int vertexSize, unsigned int layout, float stride, void* pointer);
 	void Bind();
 	void UnBind();
 	unsigned int GetID();
 	void Delete();
 };
+#endif

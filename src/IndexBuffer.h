@@ -1,9 +1,13 @@
-#include"Renderer.h"
+#ifndef INDEX_BUFFER_CLASS_H
+#define INDEX_BUFFER_CLASS_H
+
+#include "GLEW/glew.h"
 
 class IndexBuffer
 {
 private:
 	unsigned int m_RendererID;
+	unsigned int m_Count;
 public:
 	IndexBuffer(unsigned int count, void* data);
 	~IndexBuffer();
@@ -12,4 +16,6 @@ public:
 	void UnBind();
 
 	unsigned int GetRendererID();
+	unsigned int GetCount();
 };
+#endif

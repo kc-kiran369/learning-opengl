@@ -1,3 +1,6 @@
+#include <GLEW/glew.h>
+#include <GLFW/glfw3.h>
+#include <sstream>
 #include"Renderer.h"
 #include"VertexBuffer.h"
 #include"VertexArray.h"
@@ -5,6 +8,7 @@
 #include"ShaderUtils.h"
 #include"Shader.h"
 #include"Camera.h"
+#include "Texture.h"
 
 #include"glm/glm.hpp"
 #include"glm/gtc/matrix_transform.hpp"
@@ -12,16 +16,16 @@
 
 #include<stb_image/stb_image.h>
 
-float positions[] = {
-	//positions			//colors			//texture coordinate
-	-0.5f, 0.0f, 0.0f,	 0.0f, 0.0f, 1.0f,	0.0f,0.0f,
-	-0.5f, 0.0f,-0.5f,	 1.0f, 0.0f, 0.0f,	5.0f,0.0f,
-	 0.5f, 0.0f,-0.5f,	 1.0f, 0.0f, 0.0f,	0.0f,0.0f,
-	 0.5f, 0.0f, 0.5f,	 1.0f, 0.0f, 0.0f,	5.0f,0.0f,
-	 0.0f, 0.8f, 0.0f,   1.0f, 0.0f, 0.0f,	2.5f,5.0f
+float pyramid[] = {
+	//positions					Texture coordinate
+	-0.5f, -0.5f,  0.5f,		0.0f,0.0f,
+	-0.5f, -0.5f, -0.5f,		1.0f,0.0f,
+	 0.5f, -0.5f, -0.5f,		0.0f,0.0f,
+	 0.5f, -0.5f,  0.5f,		1.0f,0.0f,
+	 0.0f,  0.8f,  0.0f,		0.5f,1.0f
 };
 
-unsigned int indices[] = {
+unsigned int pyramidIndices[] = {
 	0,1,2,
 	0,2,3,
 	0,1,4,
@@ -30,13 +34,13 @@ unsigned int indices[] = {
 	3,0,4
 };
 
+int width = 600, height = 600;
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-int main()
+int main(int argc, char** args)
 {
-
 	glfwInit();
-	GLFWwindow* window = glfwCreateWindow(800, 800, "N A N I", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, "", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -50,59 +54,43 @@ int main()
 
 	glewInit();
 
-	VertexBuffer shape(sizeof(float) * (sizeof(positions) / sizeof(float)), positions);
+	VertexBuffer pyramidShape(sizeof(float) * (sizeof(pyramid) / sizeof(float)), pyramid);
 	VertexArray VAO;
-	VAO.LinkVBO(shape, 3, 0, 8 * sizeof(float), nullptr);
-	VAO.LinkVBO(shape, 3, 1, 8 * sizeof(float), (void*)(sizeof(float) * 3));
-	VAO.LinkVBO(shape, 2, 2, 8 * sizeof(float), (void*)(sizeof(float) * 6));
-	IndexBuffer IBO(sizeof(indices) / sizeof(unsigned int), indices);
-
-	shape.UnBind();
+	VAO.LinkAttrib(pyramidShape, 3, 0, 5 * sizeof(float), nullptr);
+	VAO.LinkAttrib(pyramidShape, 2, 1, 5 * sizeof(float), (void*)(sizeof(float) * 3));
+	pyramidShape.UnBind();
+	IndexBuffer IBO(sizeof(pyramidIndices) / sizeof(unsigned int), pyramidIndices);
 	IBO.UnBind();
 
-	Shader shader;
-	Camera camera(800, 800, glm::vec3(0.0f, 0.0f, 5.0f));
-	IBO.Bind();
+	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
+	Shader shader("shader/default.vert", "shader/default.frag");
+	Renderer renderer;
 
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	Texture brickTexture("resources/Brick/Brick_Color.png", 0);
+	glUniform1i(glGetUniformLocation(shader.ID, "texture0"), 0);
 
-	int width, height, channel;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char* data = stbi_load("resources\\steve.png", &width, &height, &channel, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else {
-		std::cout << "Image Not loaded" << std::endl;
-	}
-	stbi_image_free(data);
-	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_DEPTH_TEST);
 
-	//glUniform1i(glGetUniformLocation(shader.ID, "texture01"), texture);
+	glm::mat4 model = glm::mat4(1.0f);
 
 	while (!glfwWindowShouldClose(window))
 	{
-		glClearColor(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		IBO.Bind();
+		brickTexture.Bind();
 
-		camera.Matrix(45.0f, 0.0f, 100.0f, shader, "camMatrix");
+		camera.Matrix(45.0f, 0.1f, 100.0f, shader, "camMatrix");
 		camera.Input(window);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, nullptr);
 
+		//model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "rot"), 1, GL_FALSE, &model[0][0]);
+
+		renderer.Draw(VAO, IBO);
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
 
 	shader.Delete();
+	VAO.Delete();
 	glfwTerminate();
 	return 0;
 }

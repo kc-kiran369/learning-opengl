@@ -1,11 +1,10 @@
 #include"Shader.h"
-#include"Renderer.h"
 #include"ShaderUtils.h"
 
-Shader::Shader()
+Shader::Shader(const char* vert_path, const char* frag_path)
 {
-	VertexShader = ParseShader("shader\\vertex_shader.vert");
-	FragmentShader = ParseShader("shader\\fragment_shader.frag");
+	VertexShader = ParseShader(vert_path);
+	FragmentShader = ParseShader(frag_path);
 	ID = CreateShader(VertexShader, FragmentShader);
 	glUseProgram(ID);
 }
@@ -14,6 +13,12 @@ void Shader::Activate()
 {
 	glUseProgram(ID);
 }
+
+void Shader::DeActivate()
+{
+	glUseProgram(0);
+}
+
 
 void Shader::Delete()
 {

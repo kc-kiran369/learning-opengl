@@ -3,9 +3,10 @@
 VertexArray::VertexArray()
 {
 	glGenVertexArrays(1, &m_RendererID);
+	glBindVertexArray(m_RendererID);
 }
 
-void VertexArray::LinkVBO(VertexBuffer& vbo,unsigned int vertexSize, unsigned int layout, float stride, void* pointer)
+void VertexArray::LinkAttrib(VertexBuffer& vbo,unsigned int vertexSize, unsigned int layout, float stride, void* pointer)
 {
 	vbo.Bind();
 	glVertexAttribPointer(layout, vertexSize, GL_FLOAT, GL_FALSE, stride, pointer);
