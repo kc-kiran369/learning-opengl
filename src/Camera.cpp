@@ -1,3 +1,4 @@
+#include <iostream>
 #include"Camera.h"
 
 Camera::Camera(int _width, int _height, glm::vec3 _position)
@@ -7,16 +8,24 @@ Camera::Camera(int _width, int _height, glm::vec3 _position)
 	Position = _position;
 }
 
-void Camera::Matrix(float _FOVdeg, float _nearPlane, float _farPlane, Shader& _shader, const char* _uniform)
+void Camera::UpdateMatrix(float _FOVdeg, float _nearPlane, float _farPlane)
 {
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
 
 	view = glm::lookAt(Position, Position + Orientation, Up);
-	projection = glm::perspective(glm::radians(_FOVdeg), (float)width/height, _nearPlane, _farPlane);
+	projection = glm::perspective(glm::radians(_FOVdeg), (float)width / height, _nearPlane, _farPlane);
 
-	glUniformMatrix4fv(glGetUniformLocation(_shader.ID, _uniform), 1, GL_FALSE, glm::value_ptr(projection * view));
+	cameraMatrix = projection * view;
 }
+
+void Camera::Matrix(Shader& shader, const char* uniform, const float* modelMat, glm::vec4 lightColor)
+{
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, modelMat);
+	glUniform4f(glGetUniformLocation(shader.ID, "lightColor"), lightColor[0], lightColor[1], lightColor[2], lightColor[3]);
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, uniform), 1, GL_FALSE, glm::value_ptr(cameraMatrix));
+}
+
 
 void Camera::Input(GLFWwindow* window)
 {
@@ -37,22 +46,18 @@ void Camera::Input(GLFWwindow* window)
 		Position += speed * glm::normalize(glm::cross(Orientation, Up));
 	}
 
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
 	{
-		// Hides mouse cursor
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
-		// Prevents camera from jumping on the first click
 		if (firstClick)
 		{
 			glfwSetCursorPos(window, (width / 2), (height / 2));
 			firstClick = false;
 		}
 
-		// Stores the coordinates of the cursor
 		double mouseX;
 		double mouseY;
-		// Fetches the coordinates of the cursor
 		glfwGetCursorPos(window, &mouseX, &mouseY);
 
 		// Normalizes and shifts the coordinates of the cursor such that they begin in the middle of the screen
@@ -60,10 +65,8 @@ void Camera::Input(GLFWwindow* window)
 		float rotX = sensitivity * (float)(mouseY - (height / 2)) / height;
 		float rotY = sensitivity * (float)(mouseX - (width / 2)) / width;
 
-		// Calculates upcoming vertical change in the Orientation
 		glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-rotX), glm::normalize(glm::cross(Orientation, Up)));
 
-		// Decides whether or not the next vertical Orientation is legal or not
 		if (abs(glm::angle(newOrientation, Up) - glm::radians(90.0f)) <= glm::radians(85.0f))
 		{
 			Orientation = newOrientation;

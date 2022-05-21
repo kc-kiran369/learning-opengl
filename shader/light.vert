@@ -2,9 +2,10 @@
 
 layout(location=0) in vec3 _position;
 
-uniform mat4 camMatrix;
+uniform mat4 model;
+uniform mat4 MVP;
 
 void main()
 {
-	gl_Position = vec4(_position ,1.0f) ;
+	gl_Position = MVP*model*vec4(_position +vec3(1.0f,0.7f,0.0f),1.0f) ;
 }

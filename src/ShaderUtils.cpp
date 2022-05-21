@@ -1,7 +1,4 @@
 #include"ShaderUtils.h"
-#include"Renderer.h"
-
-#pragma once
 
 unsigned int CompileShader(unsigned int type, std::string& src)
 {
@@ -19,7 +16,10 @@ unsigned int CompileShader(unsigned int type, std::string& src)
 		char* data = (char*)malloc(sizeof(char) * length);
 		glGetShaderInfoLog(id, length, &length, data);
 		std::cout << data << std::endl;
+		free(data);
+		return result;
 	}
+	std::cout << (type == GL_VERTEX_SHADER ? "Vertex Shader" : "Fragment Shader") << " Compiled...." << std::endl;
 	return id;
 }
 
@@ -41,14 +41,14 @@ std::string ParseShader(const char* path)
 {
 	std::ifstream inp(path);
 	if (!inp.is_open())
-		std::cout << "File didn't open" << std::endl;
+		std::cout << "Shader didn't open\nPath : " << path << std::endl;
 	std::string line;
 	std::stringstream ss;
 	while (getline(inp, line))
 	{
-		ss << line << '\n';
+		if (line != "")
+			ss << line << '\n';
 	}
 	inp.close();
 	return ss.str();
 }
-

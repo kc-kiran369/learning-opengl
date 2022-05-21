@@ -17,12 +17,11 @@
 #include<stb_image/stb_image.h>
 
 float pyramid[] = {
-	//positions					Texture coordinate
-	-0.5f, -0.5f,  0.5f,		0.0f,0.0f,
-	-0.5f, -0.5f, -0.5f,		1.0f,0.0f,
-	 0.5f, -0.5f, -0.5f,		0.0f,0.0f,
-	 0.5f, -0.5f,  0.5f,		1.0f,0.0f,
-	 0.0f,  0.8f,  0.0f,		0.5f,1.0f
+	-0.5f, -0.5f,  0.5f,		0.0f,   0.0f,
+	-0.5f, -0.5f, -0.5f,		1.0f,   0.0f,
+	 0.5f, -0.5f, -0.5f,		0.0f,   0.0f,
+	 0.5f, -0.5f,  0.5f,		1.0f,   0.0f,
+	 0.0f,  0.8f,  0.0f,		0.5f,   1.0f
 };
 
 unsigned int pyramidIndices[] = {
@@ -34,13 +33,47 @@ unsigned int pyramidIndices[] = {
 	3,0,4
 };
 
+GLfloat lightVertices[] =
+{
+	-0.05f, -0.05f,  0.05f,
+	-0.05f, -0.05f, -0.05f,
+	 0.05f, -0.05f, -0.05f,
+	 0.05f, -0.05f,  0.05f,
+	-0.05f,  0.05f,  0.05f,
+	-0.05f,  0.05f, -0.05f,
+	 0.05f,  0.05f, -0.05f,
+	 0.05f,  0.05f,  0.05f
+};
+
+GLuint lightIndices[] =
+{
+	0, 1, 2,
+	0, 2, 3,
+	0, 4, 7,
+	0, 7, 3,
+	3, 7, 6,
+	3, 6, 2,
+	2, 6, 5,
+	2, 5, 1,
+	1, 5, 4,
+	1, 4, 0,
+	4, 5, 6,
+	4, 6, 7
+};
+
 int width = 600, height = 600;
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-int main(int argc, char** args)
+int main(int argc, char* argv[])
 {
 	glfwInit();
-	GLFWwindow* window = glfwCreateWindow(width, height, "", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, glfwGetVersionString(), NULL, NULL);
+	std::cout << argv[0] << std::endl;
+	if (!window)
+	{
+		std::cout << "Window not created.." << std::endl;
+		return 1;
+	}
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -54,45 +87,67 @@ int main(int argc, char** args)
 
 	glewInit();
 
-	VertexBuffer pyramidShape(sizeof(float) * (sizeof(pyramid) / sizeof(float)), pyramid);
+	Shader defaultShader("shader/default.vert", "shader/default.frag");
 	VertexArray VAO;
-	VAO.LinkAttrib(pyramidShape, 3, 0, 5 * sizeof(float), nullptr);
-	VAO.LinkAttrib(pyramidShape, 2, 1, 5 * sizeof(float), (void*)(sizeof(float) * 3));
-	pyramidShape.UnBind();
+	VertexBuffer VBO(sizeof(float) * (sizeof(pyramid) / sizeof(float)), pyramid);
 	IndexBuffer IBO(sizeof(pyramidIndices) / sizeof(unsigned int), pyramidIndices);
+	VAO.LinkAttrib(VBO, 3, 0, 5 * sizeof(float), nullptr);
+	VAO.LinkAttrib(VBO, 2, 1, 5 * sizeof(float), (void*)(sizeof(float) * 3));
+	VBO.UnBind();
 	IBO.UnBind();
+	VAO.UnBind();
+
+	Shader lightShader("shader/light.vert", "shader/light.frag");
+	VertexArray lightVAO;
+	lightVAO.Bind();
+	VertexBuffer lightVBO(sizeof(lightVertices), lightVertices);
+	IndexBuffer lightEBO(sizeof(lightIndices) / sizeof(unsigned int), lightIndices);
+	lightVAO.LinkAttrib(lightVBO, 3, 0, sizeof(float) * 3, nullptr);
+	lightVAO.UnBind();
+	lightVBO.UnBind();
+	lightEBO.UnBind();
 
 	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
-	Shader shader("shader/default.vert", "shader/default.frag");
 	Renderer renderer;
 
+	defaultShader.Activate();
 	Texture brickTexture("resources/Brick/Brick_Color.png", 0);
-	glUniform1i(glGetUniformLocation(shader.ID, "texture0"), 0);
+	glUniform1i(glGetUniformLocation(defaultShader.ID, "texture0"), 0);
 
 	glEnable(GL_DEPTH_TEST);
 
 	glm::mat4 model = glm::mat4(1.0f);
+	glm::vec4 lightColor = glm::vec4(1.0f, 0.5f, 0.25f, 1.0f);
 
 	while (!glfwWindowShouldClose(window))
 	{
-		IBO.Bind();
-		brickTexture.Bind();
+		renderer.Clear();
 
-		camera.Matrix(45.0f, 0.1f, 100.0f, shader, "camMatrix");
 		camera.Input(window);
+		camera.UpdateMatrix(60.0f, 0.1f, 100.0f);
 
-		//model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "rot"), 1, GL_FALSE, &model[0][0]);
-
+		brickTexture.Bind();
+		defaultShader.Activate();
+		camera.Matrix(defaultShader, "MVP", &model[0][0], lightColor);
+		VAO.Bind();
 		renderer.Draw(VAO, IBO);
+
+		lightShader.Activate();
+		camera.Matrix(lightShader, "MVP", &model[0][0], lightColor);
+		lightVAO.Bind();
+		renderer.Draw(lightVAO, lightEBO);
+
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
 
-	shader.Delete();
+	defaultShader.Delete();
+	lightShader.Delete();
 	VAO.Delete();
+	lightVAO.Delete();
 	glfwTerminate();
 	return 0;
+
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)

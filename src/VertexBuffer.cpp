@@ -9,7 +9,7 @@ VertexBuffer::VertexBuffer(unsigned int size, void* data)
 
 VertexBuffer::~VertexBuffer()
 {
-
+	glDeleteBuffers(GL_ARRAY_BUFFER, &m_RendererID);
 }
 
 void VertexBuffer::Bind()

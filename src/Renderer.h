@@ -7,6 +7,7 @@
 class Renderer
 {
 public:
+	void Clear();
 	void Draw(VertexArray& vao,IndexBuffer& ibo);
 };
 
