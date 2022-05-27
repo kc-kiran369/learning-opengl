@@ -45,17 +45,24 @@ void Camera::Input(GLFWwindow* window)
 	{
 		Position += speed * glm::normalize(glm::cross(Orientation, Up));
 	}
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+	{
+		Position += speed * glm::normalize(Up);
+	}
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+	{
+		Position += speed * -glm::normalize(Up);
+	}
+
 
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
 	{
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-
 		if (firstClick)
 		{
 			glfwSetCursorPos(window, (width / 2), (height / 2));
 			firstClick = false;
 		}
-
 		double mouseX;
 		double mouseY;
 		glfwGetCursorPos(window, &mouseX, &mouseY);
